@@ -19,7 +19,9 @@ perception) is evidence against utility of any score measuring legibility.
 I find pretty bad counter-examples to all 4 proposed formulae.  A more thorough
 way to rank proposals would be to systematically go through all 1024 cases and
 count "inversions".  I didn't have the patience to do that, mostly just thinking
-"none are perfect/great", but I like the "difference" ones better than "ratio"
+"none are perfect/great".  Basically, I don't see any good way to assign a
+threshold that will admit only good color combinations and reject only bad for
+any of these 4 metrics.  I do like the "difference" ones better than "ratio"
 because there is no fudge term/factor pulled form thin air seemingly in defiance
 of the primary research trying to get a linear lightness scales.
 
@@ -56,8 +58,12 @@ for the first table.
 
    + .13 @14,11 way worse than either 6,5 or 5,6 (cyan purple)
 
+   + .07 @8,2 or 2,8 seem way easier to read than .13@2,9 (or 9,2)
+
  - Fourth Table: DL
 
    + .16@5,6 easier than .19@0,4
 
    + .09@9,6 not so bad either.
+
+   + .10 @8,2 or 2,8 seem way easier to read than .14@2,9 (or 9,2)
