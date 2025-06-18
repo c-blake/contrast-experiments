@@ -1,4 +1,4 @@
-#!/usr/bin/py
+#!/usr/bin/python3
 #stackoverflow.com/questions/596216/formula-to-determine-perceived-brightness-of-rgb-color
 # Mynex answer, in particular.
 import sys, termios as tio, tty, time, re, os
