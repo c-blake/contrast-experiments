@@ -29,26 +29,27 @@ Anyway, here are counter examples according to my eyeballs/brain.  My notation
 is score@rowColorNum,columnColorNum, e.g. 1.6@0,4 = score1.6, black bg, blue fg
 for the first table.
 
- - First Table:  .05,RY
+ - First Table:  (./contrast.py 240 RY)
 
    + 1.6@0,4 harder to read than 1.4@7,9 & marginally harder than inverse (9,7)
 
    + 1.2@3,9 seems easier than 1.6@0,4
 
- - Second Table: .05,RL
+ - Second Table: (./contrast.py 240 RL)
 
    + 4.8@0,4 seems harder to read than MANY lesser scored cells - literally
      half the table.  Probably this means minL=.05 is a horrible choice for
      L* value ranges.  Given that it was clearly "just some round number near
      but below the lightness score of 4", this *really* begs the question of
-     setting minL more systematically.
+     setting minL more systematically or dropping *ratio* of lightness in
+     favor of |diff|.
 
    + To side-step doing all that, but still evaluate the score, just consider
-     the 4x4 sub-matrix (6789,6789) where all the L* values.  I still see the
-     metric fail in that 1.6@9,8 seems harder to read than 1.3@6,7 *or* 7,6.
-     Admittedly, this one may just relate to the fact that the matrix should
-     not really be a symmetric matrix since pixel area varies across polarity
-     so much in most fonts.
+     the 4x4 sub-matrix (6789,6789) where all the L* values are "mid-range"
+     0.3615..0.6961, i.e. much > 0.05.  I *still* see the metric fail in that
+     1.6@9,8 seems harder to read than 1.3@6,7 *or* 7,6. (Admittedly, this one
+     may relate more to the fact that the matrix should not be symmetric since
+     pixel area varies across polarity so much in most fonts.)
 
  - Third Table: DY
 
