@@ -16,18 +16,18 @@ Here we can experiment with various ways to calculate optimal contrasts.
 Counter-examples of `ScoreA > ScoreB` => A Easier to Read than B (by subjective
 perception) is evidence against utility of any score measuring legibility.
 
-I find pretty bad counter-examples to all 4 proposed formulae.  A more thorough
-way to rank proposals would be to systematically go through all 1024 cases and
-count "inversions".  I didn't have the patience to do that, mostly just thinking
-"none are perfect/great".  Basically, I don't see any good way to assign a
-threshold that will admit only good color combinations and reject only bad for
-any of these 4 metrics.  I do like the "difference" ones better than "ratio"
-because there is no fudge term/factor pulled form thin air seemingly in defiance
-of the primary research trying to get a linear lightness scales.
+I find pretty bad counterexamples to all 5 proposals.  A more thorough way to
+rank proposals would be to systematically go through all 1024 cases and count
+"inversions".  I didn't have the patience to do that, mostly just thinking "none
+are perfect/great".  Basically, I don't see any good way to assign a threshold
+that will admit only good color combinations and reject only bad for any of
+these 5 metrics.  I do like the "difference" ones better than "ratio" because
+there is no fudge term/factor pulled form thin air seemingly in defiance of the
+primary research trying to get a linear lightness scales.
 
-Anyway, here are counter examples according to my eyeballs/brain.  My notation
-is score@rowColorNum,columnColorNum, e.g. 1.6@0,4 = score1.6, black bg, blue fg
-for the first table.
+Anyway, here are counterexamples according to my eyeballs/brain.  My notation is
+score@rowColorNum,columnColorNum, e.g. 1.6@0,4 = score1.6, black bg, blue fg for
+the first table.
 
  - First Table:  (./contrast.py 240 RY)
 
@@ -68,3 +68,12 @@ for the first table.
    + .09@9,6 not so bad either.
 
    + .10 @8,2 or 2,8 seem way easier to read than .14@2,9 (or 9,2)
+
+ - Fifth Table: AY - APAC G-4g circa 2021
+
+   + .01@10,11 easier than .17@10,15 (also harder than .01@11,10)
+
+   + 3,{6;7;9;11;12;13} all "similar" legibility with very different scores,
+     namely .14, .06, .04, .33, .03, .05.
+
+   + .32@14,15 is much harder to read than .25@14,12 | .30@13,14 | .27@14,13
