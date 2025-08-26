@@ -12,6 +12,7 @@ Here we can experiment with various ways to calculate optimal contrasts.
 
 ## contrast.py w/cb palette
 ![cbPalette screenshot](./screenshots/cbPalette.png)
+![cbPaletteAY screenshot](./screenshots/cbPaletteAY.png)
 
 Counter-examples of `ScoreA > ScoreB` => A Easier to Read than B (by subjective
 perception) is evidence against utility of any score measuring legibility.
