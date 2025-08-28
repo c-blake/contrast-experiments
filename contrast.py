@@ -26,6 +26,82 @@ def APCAcontrast(t, b):                 # APCA/SAPC from Y(Luminance) of txt,bg
 
 from sys import argv, exit, stdin, stdout, stderr
 import termios as tio, tty, time, re, os
+from math import sqrt, atan2, radians, degrees, sin, cos, exp ## Start ΔE2000
+
+def clip(x, a=0, b=1): return max(a, min(b, x))
+def gamma(c):
+  c = clip(c); return c/12.92 if c <= 0.04045 else ((c + 0.055)/1.055)**2.4
+
+def XYZ(r, g, b):   # D65
+  lr, lg, lb = gamma(r), gamma(g), gamma(b)
+  x = 0.4124564*lr + 0.3575761*lg + 0.1804375*lb
+  y = 0.2126729*lr + 0.7151522*lg + 0.0721750*lb
+  z = 0.0193339*lr + 0.1191920*lg + 0.9503041*lb
+  return (x, y, z)
+
+def Lab(x, y, z):   # Reference white point (D65 illuminant)
+  def f(t): return t**(1/3) if t > 0.008856 else (7.787*t) + (16/116)
+  Xr, Yr, Zr = 0.95047, 1.00000, 1.08883
+  fx = f(x/Xr); fy = f(y/Yr); fz = f(z/Zr)
+  L = 116*fy - 16
+  a = 500*(fx - fy)
+  b = 200*(fy - fz)
+  return (L, a, b)
+
+def de2k(lab1, lab2, kL=1.0, kC=1.0, kH=1.0): # ΔE2000; Needs Lab on [0,100],..
+  L1, a1, b1 = lab1; C1 = sqrt(a1**2 + b1**2)
+  L2, a2, b2 = lab2; C2 = sqrt(a2**2 + b2**2)
+
+  C_bar = (C1 + C2)/2           # First Get delta[LCH]_P
+  G = (1 - sqrt((C_bar**7)/(C_bar**7 + 25**7)))/2
+  a1_P = (1 + G)*a1; C1_P = sqrt(a1_P**2 + b1**2)
+  a2_P = (1 + G)*a2; C2_P = sqrt(a2_P**2 + b2**2)
+  h1_P = 0 if (b1==0 and a1_P==0) else degrees(atan2(b1, a1_P)) % 360
+  h2_P = 0 if (b2==0 and a2_P==0) else degrees(atan2(b2, a2_P)) % 360
+  deltaL_P = L2 - L1
+  deltaC_P = C2_P - C1_P
+  if C1_P*C2_P == 0: delta_h_P = 0
+  else:
+    diff = h2_P - h1_P
+    if abs(diff) <= 180: delta_h_P = diff
+    elif diff > 180    : delta_h_P = diff - 360
+    else               : delta_h_P = diff + 360
+  deltaH_P = 2*sqrt(C1_P*C2_P)*sin(radians(delta_h_P)/2)
+
+  L_bar_P = (L1   + L2  )/2     # Then get scales, S_[LCH]
+  C_bar_P = (C1_P + C2_P)/2
+  if C1_P*C2_P == 0: h_bar_P = h1_P + h2_P
+  else:
+    diff = abs(h1_P - h2_P)
+    if diff > 180:
+      if (h1_P + h2_P) < 360: h_bar_P = (h1_P + h2_P + 360)/2
+      else                  : h_bar_P = (h1_P + h2_P - 360)/2
+    else                    : h_bar_P = (h1_P + h2_P)/2
+  T = (1 - 0.17*cos(radians(  h_bar_P - 30))
+         + 0.24*cos(radians(2*h_bar_P     ))
+         + 0.32*cos(radians(3*h_bar_P +  6))
+         - 0.20*cos(radians(4*h_bar_P - 63)))
+  deltaTheta = 30*exp(-((h_bar_P - 275) / 25)**2)
+  R_T = -sin(radians(2*deltaTheta))*2*sqrt((C_bar_P**7)/(C_bar_P**7 + 25**7))
+  S_L = kL*(1 + ((0.015*(L_bar_P - 50)**2)/sqrt(20 + (L_bar_P - 50)**2)))
+  S_C = kC*(1 + 0.045*C_bar_P)
+  S_H = kH*(1 + 0.015*C_bar_P*T)
+  dL = deltaL_P/S_L; dC = deltaC_P/S_C; dH = deltaH_P/S_H
+  return sqrt(dL**2 + dC**2 + dH**2 + R_T*dC*dH)
+
+def de2kSRGB(sRGB1, sRGB2, kL=1.0, kC=1.0, kH=1.0):     ## End ΔE2000
+  return min(1.0, 0.01*de2k(Lab(*XYZ(*sRGB1)), Lab(*XYZ(*sRGB2)), kL, kC, kH))
+
+try:                    ## Start CAM16UCS
+  from coloraide import Color
+  from coloraide.spaces.cam16_ucs import CAM16UCS, CAM16JMh
+  Color.register([CAM16JMh(), CAM16UCS()])
+  def CamD(c0, c1):
+    x0, y0, z0 = Color('srgb', c0).convert('cam16-ucs').coords()
+    x1, y1, z1 = Color('srgb', c1).convert('cam16-ucs').coords()
+    return min(1, 0.01*((x0-x1)**2 + (y0-y1)**2 + (z0-z1)**2)**.5)
+  haveCAM = True
+except: haveCAM = False ## End CAM16UCS
 
 def color(ints):    # 3-channel integer -> 3-channel float
   result = ints; s = 1.0/255
@@ -63,6 +139,13 @@ def contrast(p, q, m=Y, cmp='R') -> float:
   elif cmp == 'A':              # Andy Somers' ideas circa 2021
     con = abs(APCAcontrast(m(p), m(q)))
     return con, "1.0" if con >= 1 else f"{con:.2f}"[1:]
+  elif cmp == 'E':              # dE 2000
+    con = de2kSRGB(p, q); return con, "1.0" if con >= 1 else f"{con:.2f}"[1:]
+  elif cmp == 'C':              # CAM16UCS-Full
+    if haveCAM: c = CamD(p, q); return c, "1.0" if c >= 1 else f"{c:.2f}"[1:]
+    else:print(""" No CAM; Either add .../coloraide to PYTHONPATH | cp script to
+a clone https://github.com/facelessuser/coloraide" & ./contrast.py"""); exit(1)
+  else: return (0, "")
 
 def getTtyColors(colorIxes):
   i = stdin; e = stderr # Using stderr for this protocol allows saving..
@@ -136,7 +219,7 @@ FP ToKeep are value thresholds; int are rank; +:pass greater, -:fail lesser.
 Kinds of comparison are D=diff, R=ratio, A=APCA curve.\n
 Eg.1: `contrast.py 160 RY DL` emits two tables w/"worst" 1/3 (80+16/256) pairs
 BLANKED where "worst" is defined by either ratio of CIE_Y or |diff| of L*.\n
-Eg.2: Find numbers EASY to read in `contrast.py -0.1 DL`; Maybe shrink thresh.\n
+Eg.2: Find numbers EASY to read in `contrast.py -0.1 DL` (*scored* as HARD).\n
 Eg.3: Use X WM to set up 2 terminals for pixel-aligned page flipping; On 1, do
 `contrast.py 3.0 RY` (prints count N); On other, `contrast.py N DL`.  Rapidly &
 repeatedly flip.  AboveDiagTots N^ help for where to look for toggling diffs."""
